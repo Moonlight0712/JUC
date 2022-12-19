@@ -19,7 +19,9 @@ public class ThreadPoolTest {
         //注意，直接向构造函数中传callable对象就行，不用传FutureTask对象！
         Future<?> submit = pool.submit(()-> "FutureTask线程执行完毕："+ UUID.randomUUID());
         try {
+
             System.out.println(submit.get());
+
         } catch (InterruptedException e) {
             e.printStackTrace();
         } catch (ExecutionException e) {
@@ -29,6 +31,12 @@ public class ThreadPoolTest {
         }
         //使用execute就是不能获取到任务的返回值
 //        pool.execute(new Thread(futureTask));
+
+        //利用线程池来使用线程
+        /**
+         * 1.直接使用我们的Executors工具类来创建线程
+         * 2.原生创建线程池的方式：new ThreadPoolExecutors
+         */
 
         //自定义线程池来创建线程,构造函数会用到线程池的七大参数
         /**
@@ -47,16 +55,22 @@ public class ThreadPoolTest {
          * 3.阻塞队列满了就会开启新的线程，最大只能开启到max线程数量
          * 4.max满了，就用拒绝策略来拒绝多余的线程
          * 5.max满了后max执行好了，max-core数量的线程就会在指定时间后释放，最终保持到core数量
-         * 6.
+         * 6.new LinkedBlockingQueue<Runnable> 默认是Integer的最大值。可能导致内存不够,所以自己指定为10w个
+         *
+         * 一个线程池core7 max20 queue50 并发100进来怎么分配？
+         * 首先会立即执行7个，然后50个进入阻塞队列，队列满了后再开13个线程到20，此时20加50个已经安排上了剩下30个。
+         * 剩下30个使用拒绝策略来执行，一般就是丢弃，如果不想丢弃就可以换其他的拒绝策略来执行
+         *
          */
         //线程数量在5-200之间
         ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(5,
                 200,
-                null,
-                null,
-                null,
-                null,
-                null);
+                10,
+                TimeUnit.SECONDS,
+                new LinkedBlockingQueue<Runnable>(100000),
+                Executors.defaultThreadFactory(),
+                new ThreadPoolExecutor.AbortPolicy());
+
 
     }
 }
